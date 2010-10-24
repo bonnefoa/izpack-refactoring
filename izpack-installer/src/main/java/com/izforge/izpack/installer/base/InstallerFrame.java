@@ -55,6 +55,7 @@ import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
@@ -498,7 +499,7 @@ public class InstallerFrame extends JFrame implements InstallerView
      *
      * @param oldIndex Description of the Parameter
      */
-    public void switchPanel(int oldIndex)
+    public void switchPanel(final int oldIndex)
     {
         LOGGER.log(Level.INFO, "Switching panel, old index is " + oldIndex);
         // refresh dynamic variables every time, a panel switch is done
@@ -532,42 +533,42 @@ public class InstallerFrame extends JFrame implements InstallerView
                 System.exit(1);
             }
         }
-        try
+        SwingUtilities.invokeLater(new Runnable()
         {
-            if (installdata.getCurPanelNumber() < oldIndex)
+            public void run()
             {
-                isBack = true;
-            }
-            panelsContainer.setVisible(false);
-            IzPanel newPanel = (IzPanel) installdata.getPanels().get(installdata.getCurPanelNumber());
-            IzPanel oldPanel = (IzPanel) installdata.getPanels().get(oldIndex);
-            showHelpButton(newPanel.canShowHelp());
-            if (Debug.isTRACE())
-            {
-                debugger.switchPanel(newPanel.getMetadata(), oldPanel.getMetadata());
-            }
-            Log.getInstance().addDebugMessage(
-                    "InstallerFrame.switchPanel: try switching newPanel from {0} to {1} ({2} to {3})",
-                    new String[]{oldPanel.getClass().getName(), newPanel.getClass().getName(),
-                            Integer.toString(oldIndex), Integer.toString(installdata.getCurPanelNumber())},
-                    Log.PANEL_TRACE, null);
-
-            // instead of writing data here which leads to duplicated entries in
-            // auto-installation script (bug # 4551), let's make data only immediately before
-            // writing out that script.
-            // oldPanel.makeXMLData(installdata.xmlData.getChildAtIndex(oldIndex));
-            // No previos button in the first visible newPanel
-
-            configureButtonVisibility();
-            // With VM version >= 1.5 setting default button one time will not work.
-            // Therefore we set it every newPanel switch and that also later. But in
-            // the moment it seems so that the quit button will not used as default button.
-            // No idea why... (Klaus Bartz, 06.09.25)
-            SwingUtilities.invokeLater(new Runnable()
-            {
-
-                public void run()
+                try
                 {
+                    if (installdata.getCurPanelNumber() < oldIndex)
+                    {
+                        isBack = true;
+                    }
+                    panelsContainer.setVisible(false);
+                    IzPanel newPanel = (IzPanel) installdata.getPanels().get(installdata.getCurPanelNumber());
+                    IzPanel oldPanel = (IzPanel) installdata.getPanels().get(oldIndex);
+                    showHelpButton(newPanel.canShowHelp());
+                    if (Debug.isTRACE())
+                    {
+                        debugger.switchPanel(newPanel.getMetadata(), oldPanel.getMetadata());
+                    }
+                    Log.getInstance().addDebugMessage(
+                            "InstallerFrame.switchPanel: try switching newPanel from {0} to {1} ({2} to {3})",
+                            new String[]{oldPanel.getClass().getName(), newPanel.getClass().getName(),
+                                    Integer.toString(oldIndex), Integer.toString(installdata.getCurPanelNumber())},
+                            Log.PANEL_TRACE, null);
+
+                    // instead of writing data here which leads to duplicated entries in
+                    // auto-installation script (bug # 4551), let's make data only immediately before
+                    // writing out that script.
+                    // oldPanel.makeXMLData(installdata.xmlData.getChildAtIndex(oldIndex));
+                    // No previos button in the first visible newPanel
+
+                    configureButtonVisibility();
+                    // With VM version >= 1.5 setting default button one time will not work.
+                    // Therefore we set it every newPanel switch and that also later. But in
+                    // the moment it seems so that the quit button will not used as default button.
+                    // No idea why... (Klaus Bartz, 06.09.25)
+
                     JButton cdb = null;
                     String buttonName = "next";
                     if (nextButton.isEnabled())
@@ -589,72 +590,66 @@ public class InstallerFrame extends JFrame implements InstallerView
                     Log.getInstance().addDebugMessage(
                             "InstallerFrame.switchPanel: setting {0} as default button",
                             new String[]{buttonName}, Log.PANEL_TRACE, null);
-                }
-            });
 
-            // Change panels container to the current one.
-            panelsContainer.remove(oldPanel);
-            oldPanel.panelDeactivate();
-            panelsContainer.add(newPanel);
 
-            if (newPanel.getInitialFocus() != null)
-            { // Initial focus hint should be performed after current newPanel
-                // was added to the panels container, else the focus hint will
-                // be ignored.
-                // Give a hint for the initial focus to the system.
-                final Component inFoc = newPanel.getInitialFocus();
+                    // Change panels container to the current one.
+                    panelsContainer.remove(oldPanel);
+                    oldPanel.panelDeactivate();
+                    panelsContainer.add(newPanel);
 
-                // On java VM version >= 1.5 it works only if
-                // invoke later will be used.
-                SwingUtilities.invokeLater(new Runnable()
-                {
+                    if (newPanel.getInitialFocus() != null)
+                    { // Initial focus hint should be performed after current newPanel
+                        // was added to the panels container, else the focus hint will
+                        // be ignored.
+                        // Give a hint for the initial focus to the system.
+                        final Component inFoc = newPanel.getInitialFocus();
 
-                    public void run()
-                    {
+                        // On java VM version >= 1.5 it works only if
+                        // invoke later will be used.
                         inFoc.requestFocusInWindow();
-                    }
-                });
 
-                /*
-                 * On editable text components position the caret to the end of the cust existent
-                 * text.
-                 */
-                if (inFoc instanceof JTextComponent)
-                {
-                    JTextComponent inText = (JTextComponent) inFoc;
-                    if (inText.isEditable() && inText.getDocument() != null)
-                    {
-                        inText.setCaretPosition(inText.getDocument().getLength());
+                        /*
+                         * On editable text components position the caret to the end of the cust existent
+                         * text.
+                         */
+                        if (inFoc instanceof JTextComponent)
+                        {
+                            JTextComponent inText = (JTextComponent) inFoc;
+                            if (inText.isEditable() && inText.getDocument() != null)
+                            {
+                                inText.setCaretPosition(inText.getDocument().getLength());
+                            }
+                        }
                     }
+                    performHeading(newPanel);
+                    performHeadingCounter();
+                    newPanel.executePreActivationActions();
+                    newPanel.panelActivate();
+                    panelsContainer.setVisible(true);
+                    com.izforge.izpack.api.data.Panel metadata = newPanel.getMetadata();
+                    if (iconLabel != null)
+                    {
+                        if ((metadata != null) && (!"UNKNOWN".equals(metadata.getPanelid())))
+                        {
+                            loadAndShowImageForPanelOrId(iconLabel, getCurrentPanelVisbilityNumber(), metadata
+                                    .getPanelid());
+                        }
+                        else
+                        {
+                            loadAndShowImageForPanelNum(iconLabel, getCurrentPanelVisbilityNumber());
+                        }
+                    }
+                    isBack = false;
+                    callGUIListener(GUIListener.PANEL_SWITCHED);
+                    Log.getInstance().addDebugMessage("InstallerFrame.switchPanel: switched", null,
+                            Log.PANEL_TRACE, null);
+                }
+                catch (Exception err)
+                {
+                    LOGGER.log(Level.SEVERE, "Error when switching panel", err);
                 }
             }
-            performHeading(newPanel);
-            performHeadingCounter();
-            newPanel.executePreActivationActions();
-            newPanel.panelActivate();
-            panelsContainer.setVisible(true);
-            com.izforge.izpack.api.data.Panel metadata = newPanel.getMetadata();
-            if (iconLabel != null)
-            {
-                if ((metadata != null) && (!"UNKNOWN".equals(metadata.getPanelid())))
-                {
-                    loadAndShowImageForPanelOrId(iconLabel, getCurrentPanelVisbilityNumber(), metadata
-                            .getPanelid());
-                }
-                else
-                {
-                    loadAndShowImageForPanelNum(iconLabel, getCurrentPanelVisbilityNumber());
-                }
-            }
-            isBack = false;
-            callGUIListener(GUIListener.PANEL_SWITCHED);
-            Log.getInstance().addDebugMessage("InstallerFrame.switchPanel: switched", null,
-                    Log.PANEL_TRACE, null);
-        }
-        catch (Exception err)
-        {
-            LOGGER.log(Level.SEVERE, "Error when switching panel", err);
-        }
+        });
     }
 
     private int getCurrentPanelVisbilityNumber()
@@ -724,115 +719,118 @@ public class InstallerFrame extends JFrame implements InstallerView
      */
     public void exit()
     {
-        // FIXME !!! Reboot handling
-        if (installdata.isCanClose()
-                || ((!nextButton.isVisible() || !nextButton.isEnabled()) && (!prevButton
-                .isVisible() || !prevButton.isEnabled())))
+        SwingUtilities.invokeLater(new Runnable()
         {
-            // this does nothing if the uninstaller was not included
-            uninstallDataWriter.write();
-
-            boolean reboot = false;
-            if (installdata.isRebootNecessary())
-            {
-                String message, title;
-                System.out.println("[ There are file operations pending after reboot ]");
-                switch (installdata.getInfo().getRebootAction())
+            public void run()
+            {// FIXME !!! Reboot handling
+                if (installdata.isCanClose()
+                        || ((!nextButton.isVisible() || !nextButton.isEnabled()) && (!prevButton
+                        .isVisible() || !prevButton.isEnabled())))
                 {
-                    case Info.REBOOT_ACTION_ALWAYS:
-                        reboot = true;
-                        break;
-                    case Info.REBOOT_ACTION_ASK:
-                        try
+                    // this does nothing if the uninstaller was not included
+                    uninstallDataWriter.write();
+
+                    boolean reboot = false;
+                    if (installdata.isRebootNecessary())
+                    {
+                        String message, title;
+                        System.out.println("[ There are file operations pending after reboot ]");
+                        switch (installdata.getInfo().getRebootAction())
                         {
-                            message = variableSubstitutor.substitute(getLangpack().getString("installer.reboot.ask.message"));
+                            case Info.REBOOT_ACTION_ALWAYS:
+                                reboot = true;
+                                break;
+                            case Info.REBOOT_ACTION_ASK:
+                                try
+                                {
+                                    message = variableSubstitutor.substitute(getLangpack().getString("installer.reboot.ask.message"));
+                                }
+                                catch (Exception e)
+                                {
+                                    message = getLangpack().getString("installer.reboot.ask.message");
+                                }
+                                try
+                                {
+                                    title = variableSubstitutor.substitute(getLangpack()
+                                            .getString("installer.reboot.ask.title"));
+                                }
+                                catch (Exception e)
+                                {
+                                    title = getLangpack().getString("installer.reboot.ask.title");
+                                }
+                                int res = JOptionPane
+                                        .showConfirmDialog(InstallerFrame.this, message, title, JOptionPane.YES_NO_OPTION);
+                                if (res == JOptionPane.YES_OPTION)
+                                {
+                                    reboot = true;
+                                }
+                                break;
+                            case Info.REBOOT_ACTION_NOTICE:
+                                try
+                                {
+                                    message = variableSubstitutor.substitute(getLangpack().getString("installer.reboot.notice.message"));
+                                }
+                                catch (Exception e)
+                                {
+                                    message = getLangpack().getString("installer.reboot.notice.message");
+                                }
+                                try
+                                {
+                                    title = variableSubstitutor.substitute(getLangpack()
+                                            .getString("installer.reboot.notice.title"));
+                                }
+                                catch (Exception e)
+                                {
+                                    title = getLangpack().getString("installer.reboot.notice.title");
+                                }
+                                JOptionPane.showConfirmDialog(InstallerFrame.this, message, title, JOptionPane.OK_OPTION);
+                                break;
                         }
-                        catch (Exception e)
+                        if (reboot)
                         {
-                            message = getLangpack().getString("installer.reboot.ask.message");
+                            System.out.println("[ Rebooting now automatically ]");
                         }
-                        try
-                        {
-                            title = variableSubstitutor.substitute(getLangpack()
-                                    .getString("installer.reboot.ask.title"));
-                        }
-                        catch (Exception e)
-                        {
-                            title = getLangpack().getString("installer.reboot.ask.title");
-                        }
-                        int res = JOptionPane
-                                .showConfirmDialog(this, message, title, JOptionPane.YES_NO_OPTION);
-                        if (res == JOptionPane.YES_OPTION)
-                        {
-                            reboot = true;
-                        }
-                        break;
-                    case Info.REBOOT_ACTION_NOTICE:
-                        try
-                        {
-                            message = variableSubstitutor.substitute(getLangpack().getString("installer.reboot.notice.message"));
-                        }
-                        catch (Exception e)
-                        {
-                            message = getLangpack().getString("installer.reboot.notice.message");
-                        }
-                        try
-                        {
-                            title = variableSubstitutor.substitute(getLangpack()
-                                    .getString("installer.reboot.notice.title"));
-                        }
-                        catch (Exception e)
-                        {
-                            title = getLangpack().getString("installer.reboot.notice.title");
-                        }
-                        JOptionPane.showConfirmDialog(this, message, title, JOptionPane.OK_OPTION);
-                        break;
+                    }
+
+                    Housekeeper.getInstance().shutDown(0, reboot);
                 }
-                if (reboot)
+                else
                 {
-                    System.out.println("[ Rebooting now automatically ]");
+                    // The installation is not over
+                    if (Unpacker.isDiscardInterrupt() && interruptCount < MAX_INTERRUPT)
+                    { // But we should not interrupt.
+                        interruptCount++;
+                        return;
+                    }
+                    // Use a alternate message and title if defined.
+                    final String mkey = "installer.quit.reversemessage";
+                    final String tkey = "installer.quit.reversetitle";
+                    String message = getLangpack().getString(mkey);
+                    String title = getLangpack().getString(tkey);
+                    // message equal to key -> no alternate message defined.
+                    if (message.contains(mkey))
+                    {
+                        message = getLangpack().getString("installer.quit.message");
+                    }
+                    // title equal to key -> no alternate title defined.
+                    if (title.contains(tkey))
+                    {
+                        title = getLangpack().getString("installer.quit.title");
+                    }
+                    // Now replace variables in message or title.
+                    VariableSubstitutor substitutor = variableSubstitutor;
+                    message = substitutor.substitute(message);
+                    title = substitutor.substitute(title);
+                    int res = JOptionPane
+                            .showConfirmDialog(InstallerFrame.this, message, title, JOptionPane.YES_NO_OPTION);
+                    if (res == JOptionPane.YES_OPTION)
+                    {
+                        wipeAborted();
+                        Housekeeper.getInstance().shutDown(0);
+                    }
                 }
             }
-
-            Housekeeper.getInstance().shutDown(0, reboot);
-        }
-        else
-        {
-            // The installation is not over
-            if (Unpacker.isDiscardInterrupt() && interruptCount < MAX_INTERRUPT)
-            { // But we should not interrupt.
-                interruptCount++;
-                return;
-            }
-            // Use a alternate message and title if defined.
-            final String mkey = "installer.quit.reversemessage";
-            final String tkey = "installer.quit.reversetitle";
-            String message = getLangpack().getString(mkey);
-            String title = getLangpack().getString(tkey);
-            // message equal to key -> no alternate message defined.
-            if (message.contains(mkey))
-            {
-                message = getLangpack().getString("installer.quit.message");
-            }
-            // title equal to key -> no alternate title defined.
-            if (title.contains(tkey))
-            {
-                title = getLangpack().getString("installer.quit.title");
-            }
-            // Now replace variables in message or title.
-            VariableSubstitutor substitutor = variableSubstitutor;
-            message = substitutor.substitute(message);
-            title = substitutor.substitute(title);
-
-
-            int res = JOptionPane
-                    .showConfirmDialog(this, message, title, JOptionPane.YES_NO_OPTION);
-            if (res == JOptionPane.YES_OPTION)
-            {
-                wipeAborted();
-                Housekeeper.getInstance().shutDown(0);
-            }
-        }
+        });
     }
 
     /**
@@ -1103,40 +1101,47 @@ public class InstallerFrame extends JFrame implements InstallerView
      * @param startPanel   the starting panel number
      * @param doValidation whether to do panel validation
      */
-    public void navigateNext(int startPanel, boolean doValidation)
+    public void navigateNext(final int startPanel, final boolean doValidation)
     {
-        LOGGER.log(Level.INFO, "Navigate to next panel. Start panel is " + startPanel);
-        if ((installdata.getCurPanelNumber() < installdata.getPanels().size() - 1))
+        SwingUtilities.invokeLater(new Runnable()
         {
-            // We must trasfer all fields into the variables before
-            // panelconditions try to resolve the rules based on unassigned vars.
-            final IzPanel panel = (IzPanel) installdata.getPanels().get(startPanel);
-            panel.executePreValidationActions();
-            boolean isValid = doValidation ? panel.panelValidated() : true;
-            panel.executePostValidationActions();
-
-            // check if we can display the next panel or if there was an error during actions that
-            // disables the next button
-            if (!nextButton.isEnabled())
+            public void run()
             {
-                return;
+                LOGGER.log(Level.INFO, "Navigate to next panel. Start panel is " + startPanel);
+                if ((installdata.getCurPanelNumber() < installdata.getPanels().size() - 1))
+                {
+                    // We must trasfer all fields into the variables before
+                    // panelconditions try to resolve the rules based on unassigned vars.
+                    final IzPanel panel = (IzPanel) installdata.getPanels().get(startPanel);
+                    panel.executePreValidationActions();
+                    boolean isValid = doValidation ? panel.panelValidated() : true;
+                    panel.executePostValidationActions();
+
+                    // check if we can display the next panel or if there was an error during actions that
+                    // disables the next button
+                    if (!nextButton.isEnabled())
+                    {
+                        return;
+                    }
+
+                    // if this is not here, validation will
+                    // occur mutilple times while skipping panels through the recursion
+                    if (!isValid)
+                    {
+                        return;
+                    }
+
+                    // We try to show the next panel that we can.
+                    int nextPanel = hasNavigateNext(startPanel, false);
+                    if (-1 != nextPanel)
+                    {
+                        installdata.setCurPanelNumber(nextPanel);
+                        switchPanel(startPanel);
+                    }
+                }
             }
 
-            // if this is not here, validation will
-            // occur mutilple times while skipping panels through the recursion
-            if (!isValid)
-            {
-                return;
-            }
-
-            // We try to show the next panel that we can.
-            int nextPanel = hasNavigateNext(startPanel, false);
-            if (-1 != nextPanel)
-            {
-                installdata.setCurPanelNumber(nextPanel);
-                switchPanel(startPanel);
-            }
-        }
+        });
     }
 
 
@@ -1222,15 +1227,20 @@ public class InstallerFrame extends JFrame implements InstallerView
      *
      * @param endingPanel the panel to search backwards, beginning from this.
      */
-    public void navigatePrevious(int endingPanel)
+    public void navigatePrevious(final int endingPanel)
     {
-        // We try to show the previous panel that we can.
-        int prevPanel = hasNavigatePrevious(endingPanel, false);
-        if (-1 != prevPanel)
+        SwingUtilities.invokeLater(new Runnable()
         {
-            installdata.setCurPanelNumber(prevPanel);
-            switchPanel(endingPanel);
-        }
+            public void run()
+            {// We try to show the previous panel that we can.
+                int prevPanel = hasNavigatePrevious(endingPanel, false);
+                if (-1 != prevPanel)
+                {
+                    installdata.setCurPanelNumber(prevPanel);
+                    switchPanel(endingPanel);
+                }
+            }
+        });
     }
 
     /**
@@ -1793,7 +1803,7 @@ public class InstallerFrame extends JFrame implements InstallerView
         {
             InstallerBase.refreshDynamicVariables(installdata, new VariableSubstitutorImpl(installdata.getVariables()));
         }
-        catch (Exception e)
+        catch (final Exception e)
         {
             LOGGER.log(Level.SEVERE, "Error when refreshing variable", e);
             Debug.trace("Refreshing dynamic variables failed, asking user whether to proceed.");
