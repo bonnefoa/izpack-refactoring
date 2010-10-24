@@ -191,7 +191,7 @@ public class GUIInstallDataProvider extends AbstractInstallDataProvider
         // Nimbus (http://nimbus.dev.java.net/)
         if ("nimbus".equals(lookAndFeelName))
         {
-            UIManager.setLookAndFeel("org.jdesktop.swingx.plaf.nimbus.NimbusLookAndFeel");
+            UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
             return;
         }
 
@@ -223,14 +223,26 @@ public class GUIInstallDataProvider extends AbstractInstallDataProvider
         if ("substance".equals(lookAndFeelName))
         {
             Map<String, String> variants = new TreeMap<String, String>();
-            variants.put("default", "org.jvnet.substance.SubstanceLookAndFeel"); // Ugly!!!
-            variants.put("business", "org.jvnet.substance.skin.SubstanceBusinessLookAndFeel");
-            variants.put("business-blue", "org.jvnet.substance.skin.SubstanceBusinessBlueSteelLookAndFeel");
-            variants.put("business-black", "org.jvnet.substance.skin.SubstanceBusinessBlackSteelLookAndFeel");
-            variants.put("creme", "org.jvnet.substance.skin.SubstanceCremeLookAndFeel");
-            variants.put("sahara", "org.jvnet.substance.skin.SubstanceSaharaLookAndFeel");
-            variants.put("moderate", "org.jvnet.substance.skin.SubstanceModerateLookAndFeel");
-            variants.put("officesilver", "org.jvnet.substance.skin.SubstanceOfficeSilver2007LookAndFeel");
+            variants.put("default", "org.pushingpixels.substance.SubstanceLookAndFeel"); // Ugly!!!
+            variants.put("business", "org.pushingpixels.substance.api.skin.SubstanceBusinessLookAndFeel");
+            variants.put("business-blue", "org.pushingpixels.substance.api.skin.SubstanceBusinessBlueSteelLookAndFeel");
+            variants.put("business-black", "org.pushingpixels.substance.api.skin.SubstanceBusinessBlackSteelLookAndFeel");
+            variants.put("creme", "org.pushingpixels.substance.api.skin.SubstanceCremeLookAndFeel");
+            variants.put("creme-coffee", "org.pushingpixels.substance.api.skin.SubstanceCremeCoffeeLookAndFeel");
+            variants.put("sahara", "org.pushingpixels.substance.api.skin.SubstanceSaharaLookAndFeel");
+            variants.put("moderate", "org.pushingpixels.substance.api.skin.SubstanceModerateLookAndFeel");
+            variants.put("nebula", "org.pushingpixels.substance.api.skin.SubstanceNebulaLookAndFeel");
+            variants.put("nebula-brick-wall", "org.pushingpixels.substance.api.skin.SubstanceNebulaBrickWallLookAndFeel");
+            variants.put("autumn", "org.pushingpixels.substance.api.skin.SubstanceAutumnLookAndFeel");
+            variants.put("mist-silver", "org.pushingpixels.substance.api.skin.SubstanceMistSilverLookAndFeel");
+            variants.put("mist-aqua", "org.pushingpixels.substance.api.skin.SubstanceMistAquaLookAndFeel");
+            variants.put("dust", "org.pushingpixels.substance.api.skin.SubstanceDustLookAndFeel");
+            variants.put("dust-coffee", "org.pushingpixels.substance.api.skin.SubstanceDustCoffeeLookAndFeel");
+            variants.put("gemini", "org.pushingpixels.substance.api.skin.SubstanceGeminiLookAndFeel");
+            variants.put("mariner", "org.pushingpixels.substance.api.skin.SubstanceMarinerLookAndFeel");
+            variants.put("officesilver", "org.pushingpixels.substance.skin.SubstanceOfficeSilver2007LookAndFeel");
+            variants.put("officeblue", "org.pushingpixels.substance.api.skin.SubstanceOfficeBlue2007LookAndFeel");
+            variants.put("officeblack", "org.pushingpixels.substance.api.skin.SubstanceOfficeBlack2007LookAndFeel");
             String variant = variants.get("default");
 
             Map<String, String> params = installdata.guiPrefs.lookAndFeelParams.get(lookAndFeelName);
@@ -242,7 +254,6 @@ public class GUIInstallDataProvider extends AbstractInstallDataProvider
                     variant = variants.get(param);
                 }
             }
-
             UIManager.setLookAndFeel(variant);
         }
     }

@@ -30,6 +30,7 @@ import com.izforge.izpack.installer.language.LanguageDialog;
 import com.izforge.izpack.util.Debug;
 import com.izforge.izpack.util.StringTool;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.Iterator;
@@ -56,19 +57,24 @@ public class Installer
     * @param args The arguments passed on the command-line.
     */
 
-    public static void main(String[] args)
+    public static void main(final String[] args)
     {
-        try
-        {
-            Installer installer = new Installer();
-            installer.initContainer();
-            installer.start(args);
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-
+        final Installer installer = new Installer();
+        SwingUtilities.invokeLater(new Runnable()
+            {
+                public void run()
+                {
+                    try
+                    {
+                        installer.initContainer();
+                        installer.start(args);
+                    }
+                    catch (Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            });
     }
 
     private void initContainer() throws Exception

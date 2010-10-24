@@ -90,6 +90,7 @@ import com.izforge.izpack.util.file.DirectoryScanner;
 import org.apache.commons.lang.StringUtils;
 
 import java.io.*;
+import java.net.JarURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -391,7 +392,7 @@ public class CompilerConfig extends Thread
             HashMap<String, String> lafMap = new HashMap<String, String>();
             lafMap.put("liquid", "com/birosoft/liquid/");
             lafMap.put("looks", "com/jgoodies/looks");
-            lafMap.put("substance", "org/pushingpixels/substance");
+            lafMap.put("substance", "org/pushingpixels");
             lafMap.put("nimbus", "com/sun/java/swing/plaf/nimbus");
             lafMap.put("kunststoff", "kunststoff.jar");
             lafMap.put("metouia", "metouia.jar");
@@ -409,17 +410,20 @@ public class CompilerConfig extends Thread
                 {
                     assertionHelper.parseError(guiPrefsElement, "Unrecognized Look and Feel: " + lafName);
                 }
-                URL lafJarURL = null;
+                Set<URL> lafJars = new HashSet<URL>();
                 if(!lafJarName.isEmpty())
                 {
-                    lafJarURL = findLookAndFeelResource(lafJarName);
+                    lafJars = findLookAndFeelResource(lafJarName);
                 }
-                if(lafJarURL == null)
+                if(lafJars.isEmpty())
                 {
-                  lafJarURL = findIzPackResource("lib/" + lafJarName, "Look and Feel Jar file",
-                        guiPrefsElement);
+                  lafJars.add(findIzPackResource("lib/" + lafJarName, "Look and Feel Jar file",
+                        guiPrefsElement));
                 }
-                packager.addJarContent(lafJarURL);
+                for(URL lafJarURL : lafJars)
+                {
+                  packager.addJarContent(lafJarURL);
+                }
             }
         }
         packager.setGUIPrefs(prefs);
@@ -2610,11 +2614,24 @@ public class CompilerConfig extends Thread
     }
 
 
-    private URL findLookAndFeelResource(String lookClassName)
-            throws CompilerException
+    private Set<URL> findLookAndFeelResource(String lookPackageName)
     {
         URLClassLoader loader = (URLClassLoader) Thread.currentThread().getContextClassLoader();
-        return loader.getResource(lookClassName);
+        Set<URL> result = new HashSet<URL>();
+        try
+        {
+            Enumeration<URL> urls = loader.getResources(lookPackageName);
+            while(urls.hasMoreElements())
+            {
+                URL url = urls.nextElement();
+                JarURLConnection connection = (JarURLConnection) url.openConnection();
+                result.add(connection.getJarFileURL());
+            }
+        }
+        catch(IOException ioex)
+        {
+        }
+        return result;
     }
 
   /**
