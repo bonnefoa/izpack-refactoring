@@ -1,10 +1,14 @@
 package com.izforge.izpack.compiler.data;
 
+import com.izforge.izpack.api.data.Info;
 import com.izforge.izpack.util.FileUtil;
 
 import java.io.File;
 import java.net.URI;
 import java.net.URL;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 /**
@@ -65,6 +69,11 @@ public class CompilerData
     private int comprLevel = -1;
 
     /**
+     * External Information
+     */
+    Info externalInfo = new Info();
+
+    /**
      * The IzPack version.
      */
     public final static String IZPACK_VERSION = ResourceBundle.getBundle("version").getString("izpack.version");
@@ -101,14 +110,17 @@ public class CompilerData
 
     public CompilerData(String comprFormat, String kind, String installFile, String installText, String basedir, String output, int comprLevel)
     {
-        this();
+        this(installFile, basedir, output);
         this.comprFormat = comprFormat;
         this.kind = kind;
-        this.installFile = installFile;
         this.installText = installText;
-        this.basedir = basedir;
-        this.output = output;
         this.comprLevel = comprLevel;
+    }
+
+    public CompilerData(String comprFormat, String kind, String installFile, String installText, String basedir, String output, int comprLevel, Info externalInfo)
+    {
+        this(comprFormat, kind, installFile, installText, basedir, output, comprLevel);
+        this.externalInfo = externalInfo;
     }
 
     /**
@@ -239,5 +251,9 @@ public class CompilerData
             }
             root = root.getParentFile();
         }
+    }
+
+    public Info getExternalInfo() {
+        return this.externalInfo;
     }
 }
